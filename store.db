@@ -1,0 +1,7 @@
+CREATE TABLE "sensor_update"(
+    "id" INTEGER,
+    "temp" TEXT,
+    "humi" TEXT,
+    "ppm" TEXT,
+    PRIMARY KEY( "id" AUTOINCREMENT)
+);

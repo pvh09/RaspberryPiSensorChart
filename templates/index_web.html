@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html  lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>LTNC</title>
+    <!-- Bootstraps Java Scipts Links -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+    <!-- JQuery links  -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <!--High CHART LIVE  -->
+    <script src="http://code.highcharts.com/highcharts.js"></script>
+    <script src="http://code.highcharts.com/highcharts-more.js"></script>
+    <script src="http://code.highcharts.com/modules/exporting.js"></script>
+    <!--Gauge  -->
+    <script type="text/javascript" src="http://pubnub.github.io/eon/lib/eon.js"></script>
+</head>
+
+<body>
+    <div class="clock">
+        <span class="clock-time"></span>
+        <span class="clock-ampm"></span>
+    </div>
+    <div class="cangiua">
+        <header>
+            <div class="content">
+                <h1>LẬP TRÌNH NÂNG CAO</h1>
+                <h1>ỨNG DỤNG TRONG ĐO LƯỜNG VÀ ĐIỀU KHIỂN</h1>
+                <p>Đo nhiệt độ, độ ẩm, nồng độ Gas bằng Raspberry Pi</p>
+            </div>
+        </header>
+
+    </div>
+    <br>
+    <br>
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="sen">
+                <h1 class="sensor1">Sensor1: </h1>
+            </div>
+            <br>
+            <div class="sen">
+                <h1 class="sensor2">Sensor2: </h1>
+            </div>
+            <br>
+            <div class="sen">
+                <h1 class="sensor3">Sensor3: </h1>
+            </div>
+            <br>
+            
+        </div>
+    </div>
+
+    <style>
+        .clock {
+            background: white;
+            width: 200px;
+            padding: 10px;
+            text-align: center;
+            border-radius: 10px;
+        }
+        .clock-time,
+        .clock-ampm {
+            font-family: "Concert One", cursive;
+            font-size: 30px;
+            color: blueviolet;
+        }
+        .clock-time {
+            font-size: 48px;
+        }
+        .cangiua{
+            width: 920px;
+            margin: 0 auto; /*trenduoi traiphai*/
+        }
+        header{
+            margin-top: -92px;
+            width: 100%;
+            height: 150px;
+            background-color: #4ac8f6;
+            border-radius: 25px;
+        }
+        header .content{
+            text-align: center;
+            color: black;
+        }
+        header .content h1{
+            font-size: 35px;
+        }
+        header .content p{
+            margin-top: 15px;
+            font-size: 25px;
+            color: rgb(174, 35, 102);
+        }
+        .row{
+            margin-top: -15px;
+            justify-content: center;
+        }
+        .row .sen{
+            text-align: center;
+            margin-right: 10%;
+        }
+        .rows {
+            margin-top: -12px;
+        }
+    </style>
+
+    <script>
+        class DigitalClock {
+            constructor(element) {
+            this.element = element;
+            }
+            start() {
+            this.update();
+            setInterval(() => {
+                this.update();
+            }, 500);
+            }
+            update() {
+            const parts = this.getTimeParts();
+            const minuteFormatted = parts.minute.toString().padStart(2, "0");
+            const timeFormatted = `${parts.hour}:${minuteFormatted}`;
+            const amPm = parts.isAm ? "AM" : "PM";
+            this.element.querySelector(".clock-time").textContent = timeFormatted;
+            this.element.querySelector(".clock-ampm").textContent = amPm;
+            }
+            getTimeParts() {
+            const now = new Date();
+            return {
+                hour: now.getHours() % 12 || 12,
+                minute: now.getMinutes(),
+                isAm: now.getHours() < 12
+            };
+            }
+        }
+        const clockElement = document.querySelector(".clock");
+        const clockObject = new DigitalClock(clockElement);
+        clockObject.start();
+    </script>
+
+    <div class="container-fluid">
+        <div class="rows">
+            <div class="container-fluid" id="data-temperature">
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="rows">
+            <div class="container-fluid" id="data-humidity">
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="rows">
+            <div class="container-fluid" id="data-air">
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        var chartTemperatue;
+        var chartHumidity;
+        var chartAir;
+
+        function requestData()
+        {
+            // Ajax call to get the Data from Flask
+            var requests = $.get('/data');
+            var tm = requests.done(function (result)
+            {
+                // Temperature số point xuất hiện 
+                var seriesTemperature = chartTemperatue.series[0],
+                    shiftTemperature = seriesTemperature.data.length > 10;
+
+                // Humidity
+                var seriesHumidity = chartHumidity.series[0],
+                    shiftHumidity = seriesHumidity.data.length > 10;
+
+                var seriesAir = chartAir.series[0],
+                    shiftAir = seriesAir.data.length > 10;
+
+                // Add the Point
+                // Time Temperature\
+                var data1 = [];
+                data1.push(result[0]);
+                data1.push(result[1]);
+
+                // Add the Point
+                // Time Humidity
+                var data2 = [];
+                data2.push(result[0]);
+                data2.push(result[2]);
+
+                var data3 = [];
+                data3.push(result[0]);
+                data3.push(result[3]);
+
+
+                chartTemperatue.series[0].addPoint(data1, true, shiftTemperature);
+                chartHumidity.series[0].addPoint(data2, true, shiftHumidity);
+                chartAir.series[0].addPoint(data3, true, shiftAir);
+
+                $(".sensor1").text("");
+                $(".sensor1").text("Temperature: " +  Math.round(data1[1]*100)/100 );
+
+                $(".sensor2").text("");
+                $(".sensor2").text("Humidity: " +  Math.round(data2[1]*100)/100 );
+
+                $(".sensor3").text("");
+                $(".sensor3").text("Concentration Gas: " + Math.round(data3[1]) );
+
+
+                // call it again after one second
+                setTimeout(requestData, 2000);
+
+            });
+        }
+
+        $(document).ready(function()
+        {
+            // --------------Chart 1 Edit----------------------------
+            chartTemperatue = new Highcharts.Chart({
+                chart:
+                    {
+                    renderTo: 'data-temperature',
+                    defaultSeriesType: 'area',
+                    events: {
+                        load: requestData
+                    }
+                    },
+                title:
+                    {
+                    text: 'Temperature'
+                    },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                        },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Nhiệt độ (°C)',
+                        margin: 50
+                            }
+                         },
+                series: [{
+                    color : '#FF9900',
+                    lineColor: '#FF6600',
+                    name: 'Temperature',
+                    data: []
+                }]
+            });
+            // --------------Chart 2 Edit - -----------------
+
+            chartHumidity = new Highcharts.Chart({
+                chart:
+                    {
+                        renderTo: 'data-humidity',
+                        defaultSeriesType: 'area',
+                        events: {
+                            load: requestData
+                        }
+                    },
+                title:
+                    {
+                        text: 'Humidity'
+                    },
+                xAxis: {
+                    type: 'datetime' ,
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Độ ẩm (%)',
+                        margin: 50
+                    }
+                },
+                series: [{
+                    color : '#4ac8f6',
+                    lineColor: '#1d82b8',
+                    name: 'Humidity',
+                    data: []
+                }]
+            });
+
+            // chart 3
+            chartAir = new Highcharts.Chart({
+                chart:
+                {
+                    renderTo: 'data-air',
+                        defaultSeriesType: 'area',
+                        events: {
+                            load: requestData
+                        }
+                },
+                title:
+                    {
+                        text: 'Concentration Gas'
+                    },
+                xAxis: {
+                    type: 'datetime',
+                    tickPixelInterval: 150,
+                    maxZoom: 20 * 1000
+                },
+                yAxis: {
+                    minPadding: 0.2,
+                    maxPadding: 0.2,
+                    title: {
+                        text: 'Nồng độ (PPM)',
+                        margin: 50
+                    }
+                },
+                series: [{
+                    color : '#33FF66',
+                    lineColor: '#00CC00',
+                    name: 'Concentration Gas',
+                    data: []
+                }]
+            })
+        });
+    </script>
+</body>
+</html>
